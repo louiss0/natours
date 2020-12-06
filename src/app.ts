@@ -14,6 +14,9 @@ import AppError from './utils/AppError';
 import globalErrorHandler from './middlewares/globalErrorHandler';
 import Paths from './types/Paths';
 import userRouter from './routes/UserRoutes';
+import tourRouter from './routes/TourRoutes';
+import reviewRouter from './routes/reviewRoutes';
+import viewRouter from './routes/viewRoutes';
 // Start express app
 const app = express();
 
@@ -35,7 +38,15 @@ app.use(express.static('public'))
 
 // Set security HTTP headers
 app.use(
-    helmet
+    helmet.contentSecurityPolicy({
+        directives: {
+            defaultSrc: ["'self'", 'https:', 'http:', 'data:', 'ws:'],
+            baseUri: ["'self'"],
+            fontSrc: ["'self'", 'https:', 'http:', 'data:'],
+            scriptSrc: ["'self'", 'https:', 'http:', 'blob:'],
+            styleSrc: ["'self'", "'unsafe-inline'", 'https:', 'http:'],
+        },
+    })
 );
 
 // Development logging
@@ -66,9 +77,21 @@ app.use(mongoSanitize());
 app.use(xss());
 
 // Prevent parameter pollution
+const whitelist = [
+    'duration',
+    'ratingsQuantity',
+    'ratingsAverage',
+    'maxGroupSize',
+    'difficulty',
+    'price'
+]
 
 
-app.use(hpp());
+app.use(
+    hpp({
+        whitelist
+    })
+);
 
 app.use(compression());
 
@@ -84,6 +107,13 @@ app.use((req, res, next) => {
 
 
 
+app.use(`/`, viewRouter)
+
+app.use(`${Paths.Version1}${Paths.Users}`, userRouter)
+
+app.use(`${Paths.Version1}${Paths.Tours}`, tourRouter)
+
+app.use(`${Paths.Version1}${Paths.Reviews}`, reviewRouter)
 
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404));
