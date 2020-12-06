@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
 process.on('uncaughtException', err => {
@@ -18,6 +19,17 @@ if (DATABASE && DATABASE_PASSWORD && DATABASE_NAME) {
         .replace('<PASSWORD>', DATABASE_PASSWORD)
         .replace("<dbname>", DATABASE_NAME);
 
+    mongoose
+        .connect(DB, {
+            useNewUrlParser: true,
+            useCreateIndex: true,
+            useFindAndModify: true,
+            useUnifiedTopology: true
+        })
+        .then(() => console.log('DB connection successful!'))
+        .catch((reason) => {
+            console.log(reason)
+        });
 
 } else {
 
