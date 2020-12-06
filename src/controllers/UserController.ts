@@ -6,15 +6,7 @@ export default class UserController {
 
 
 
-    static get me(): RequestHandler {
 
-        return catchAsync(async (req) => {
-
-            const userRequest = req as UserTypes.UserRequest
-
-            req.params.id = userRequest.user.id
-        })
-    }
 
 
 
