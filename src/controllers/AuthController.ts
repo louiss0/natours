@@ -157,6 +157,44 @@ export default class AuthController {
         next();
     });
 
+    static isLoggedIn: AsyncMiddleware = async (req, res, next) => {
+
+        // 1) Getting token and check of it's there
+
+        if (req.cookies.jwt) {
+
+            // 1) Verification token
+
+
+            const decoded = await JWTTokenSenderAndManipulator
+                .decodeToken(req.cookies.jwt) as Decoded
+
+
+            // 2) Check if user still exists
+            if (!decoded) {
+
+                return next()
+            }
+
+            const currentUser = await User.findById(decoded.id);
+
+            if (!currentUser) {
+                return next();
+            }
+
+            // 4) Check if user changed password after the token was issued
+
+            if (currentUser.changedPasswordAfter(decoded.iat)) {
+                return next();
+            }
+
+            // GRANT ACCESS TO PROTECTED ROUTE
+
+            res.locals.user = currentUser;
+        }
+
+        return next()
+    }
 
 
     static forgotPassword = catchAsync(async (req, res, next) => {
