@@ -1,12 +1,13 @@
 import { model, Query, Schema } from "mongoose";
 import ReviewTypes from "../types/reviewTypes";
+import TourTypes from "../types/TourTypes";
 import returnToObjectAndToJsonOptions from "../utils/returnToObjectAndToJsonOptions";
 import Tour from "./TourModel";
 
 
 const reviewSchemaOptions = returnToObjectAndToJsonOptions()
 
-const reviewSchema = new Schema<ReviewTypes.ReviewDocument>({
+const reviewSchema = new Schema({
     review: {
         type: String,
         required: true
@@ -36,11 +37,11 @@ const reviewSchema = new Schema<ReviewTypes.ReviewDocument>({
 }, reviewSchemaOptions)
 
 
-reviewSchema.pre<Query<ReviewTypes.ReviewDocument>>(/^find/, function (next) {
+reviewSchema.pre<TourTypes.TourDocument>(/^find/, function (next) {
 
     this.populate({ path: "user", select: 'name photo' })
 
-    next()
+    next(null)
 })
 
 reviewSchema.statics.calcAverageRating = async function (this: ReviewTypes.ReviewModel, tourId: string) {
@@ -76,7 +77,7 @@ reviewSchema.index({ tour: 1, user: 1 }, { unique: true })
 reviewSchema.post<ReviewTypes.ReviewDocument>(/save|^findOneAnd/, async (doc, next) => {
 
     await doc.constructor?.calcAverageRating?.(doc.tour);
-    next();
+    next(null);
 });
 
 

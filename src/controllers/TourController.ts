@@ -40,7 +40,7 @@ export default class TourController extends CrudFactory {
         req.query.fields = "name,ratingsAverage,summary,difficulty"
 
 
-        next()
+        this.getAllTours(req, res, next)
     }
 
     static get tourStats(): RequestHandler {

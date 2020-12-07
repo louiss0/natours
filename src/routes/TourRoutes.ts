@@ -1,6 +1,7 @@
 import { Router } from "express";
 import AuthController from "../controllers/AuthController";
 import TourController from "../controllers/TourController";
+import imageUploader from "../middlewares/imageUploader";
 import UserTypes from "../types/UserTypes";
 import reviewRouter from "./reviewRoutes";
 
@@ -14,7 +15,7 @@ tourRouter.use("/:tourId/reviews", reviewRouter)
 
 
 tourRouter.route("/top-5-cheap")
-    .get(TourController.aliasTopTours, TourController.getAllTours)
+    .get(TourController.aliasTopTours)
 
 tourRouter.route("/monthly-plan/:year")
     .get(TourController.monthlyPlan)

@@ -63,7 +63,7 @@ class JWTTokenSenderAndManipulator {
                 data: {
                     user
                 }
-            })
+            }, statusCode)
         } else {
 
             console.error(token)

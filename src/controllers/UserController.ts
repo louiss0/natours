@@ -8,17 +8,20 @@ import filterObject from "../utils/filterObject";
 import sendJson from "../utils/sendJson";
 import CrudFactory from "./CrudFactory";
 
+
 export default class UserController extends CrudFactory {
 
 
 
     static get me(): RequestHandler {
 
-        return catchAsync(async (req) => {
+        return catchAsync(async (req, res, next) => {
 
             const userRequest = req as UserTypes.UserRequest
 
             req.params.id = userRequest.user.id
+
+            this.getUser(req, res, next)
         })
     }
 
@@ -80,11 +83,13 @@ export default class UserController extends CrudFactory {
 
         return catchAsync(async (req, res, next) => {
 
+            const userRequest = req as UserTypes.UserRequest
 
-            const userBody = req.body as
-                Pick<UserTypes.UserDocument, "id" | "email" | "name" | "password" | "passwordConfirm">
 
-            const deletedUser = await User.findByIdAndUpdate(userBody.id, { active: false })
+            const deletedUser = await User.findByIdAndUpdate(
+                userRequest.user.id,
+                { active: false }
+            )
 
 
             if (!deletedUser) {
@@ -100,7 +105,6 @@ export default class UserController extends CrudFactory {
 
         })
     }
-
 
 
     static get getAllUsers() {

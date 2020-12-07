@@ -125,16 +125,19 @@ export default class AuthController {
         // 2) Verification token
 
 
-        const decoded = await JWTTokenSenderAndManipulator.decodeToken(token) as Decoded
+        const decoder = JWTTokenSenderAndManipulator.decodeToken(token)
 
 
-        if (!decoded) {
+        if (!decoder) {
 
             return next(new AppError("Could not decode token", HTTPStatusCodes.ServerError))
         }
 
+        const decoded = await decoder as Decoded
+
         // 3) Check if user still exists
         const currentUser = await User.findById(decoded.id);
+
         if (!currentUser) {
             return next(
                 new AppError(
@@ -206,6 +209,7 @@ export default class AuthController {
 
         // 2) Generate the random reset token
         const resetToken = user.createPasswordResetToken();
+
         await user.save({ validateBeforeSave: false });
 
         // 3) Send it to user's email

@@ -7,21 +7,18 @@ import validator from "validator"
 const tourSchemaOptions = returnToObjectAndToJsonOptions()
 
 
-const tourSchema = new Schema<TourTypes.TourDocument>({
+const tourSchema = new Schema({
     name: {
         type: String,
         required: [true, "A tour must have a name"],
         unique: true,
-        trim: true,
         maxlength: [40, "A tour must have less than or equal to 40 characters"],
         minlength: [10, "A tour must have more than or equal to 10 characters"],
-        validate: {
-            validator(val: string) {
-                const value = val.split(" ").join("");
-                return validator.isAlpha(value);
-            },
-            message: 'Tour name must only contain letters'
-        }
+        validate(val: string) {
+            const value = val.split(" ").join("");
+            return validator.isAlpha(value);
+        },
+
     },
     slug: String,
     duration: {
@@ -34,22 +31,15 @@ const tourSchema = new Schema<TourTypes.TourDocument>({
         required: [true, "A tour must have a max group size"],
 
     },
-
     difficulty: {
         type: String,
         required: [true, "A tour must have a difficulty"],
-        enum: {
-            values: [
-                TourTypes.TourDifficulties.Difficult,
-                TourTypes.TourDifficulties.Medium,
-                TourTypes.TourDifficulties.Easy
-            ],
-            message: `Difficulty is Either 
-                ${TourTypes.TourDifficulties.Difficult}
-                ${TourTypes.TourDifficulties.Medium}
-                ${TourTypes.TourDifficulties.Easy}
-                    `
-        }
+        enum: [
+            TourTypes.TourDifficulties.Difficult,
+            TourTypes.TourDifficulties.Medium,
+            TourTypes.TourDifficulties.Easy
+        ],
+
     },
     ratingsQuantity: {
         type: Number,
@@ -58,8 +48,8 @@ const tourSchema = new Schema<TourTypes.TourDocument>({
     ratingsAverage: {
         type: Number,
         default: 4.5,
-        max: [5, "Rating must be below 5.0"],
-        min: [1, "Rating must be above 1.0"],
+        max: 5,
+        min: 1,
         set: (val: number) => Math.floor(Math.round(val))
     },
     price: {
@@ -132,30 +122,32 @@ tourSchema.index({ slug: 1 })
 tourSchema.index({ startLocation: "2dsphere" })
 
 
+
 //  * Document Middleware
 tourSchema.pre<TourTypes.TourDocument>("save", function (next) {
 
     this.slug = slugify(this.name, { lower: true })
 
-    next()
+    next(null)
 })
 
 //  * Query Middleware
 
-tourSchema.pre<Query<TourTypes.TourDocument>>(/^find/, function (next) {
+tourSchema.pre<TourTypes.TourModel>(/^find/, function (next) {
+
 
 
     this.find({ secretTour: { $ne: true } })
 
-    next()
+    next(null)
 })
 
-tourSchema.pre<Query<TourTypes.TourDocument>>(/^find/, function (next) {
+tourSchema.pre(/^find/, function (next) {
 
 
     this.populate({ path: "guides", select: "-__v" })
 
-    next()
+    next(null)
 })
 
 tourSchema.pre<Aggregate<TourTypes.TourDocument>>("aggregate", function (next) {
@@ -165,7 +157,7 @@ tourSchema.pre<Aggregate<TourTypes.TourDocument>>("aggregate", function (next) {
         this.pipeline().unshift({ $match: { secretTour: { $ne: true } } });
     }
 
-    next();
+    next(null);
 })
 
 

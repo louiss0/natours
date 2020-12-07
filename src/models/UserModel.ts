@@ -7,7 +7,7 @@ import returnToObjectAndToJsonOptions from '../utils/returnToObjectAndToJsonOpti
 
 const userSchemaOptions = returnToObjectAndToJsonOptions()
 
-const userSchema = new Schema<UserTypes.UserDocument>({
+const userSchema = new Schema({
     name: {
         type: String,
         required: [true, 'Please tell us your name!']
@@ -42,13 +42,10 @@ const userSchema = new Schema<UserTypes.UserDocument>({
     passwordConfirm: {
         type: String,
         required: [true, 'Please confirm your password'],
-        validate: {
-            // This only works on CREATE and SAVE!!!
-            validator: function (this: UserTypes.UserDocument, el: string): boolean {
-                return el === this.password;
-            },
-            message: 'Passwords are not the same!'
-        }
+        validate(this: UserTypes.UserDocument, el: string): boolean {
+            return el === this.password;
+        },
+        message: 'Passwords are not the same!'
     },
     passwordChangedAt: Date,
     passwordResetToken: String,
@@ -64,37 +61,37 @@ const userSchema = new Schema<UserTypes.UserDocument>({
 
 userSchema.pre<UserTypes.UserDocument>('save', async function (next) {
     // Only run this function if password was actually modified
-    if (!this.isModified('password')) return next();
+    if (!this.isModified('password')) return next(null);
 
     // Hash the password with cost of 12
     this.password = await bcrypt.hash(this.password as string, 12);
 
     // Delete passwordConfirm field
     this.passwordConfirm = null;
-    next();
+    next(null);
 });
 
 userSchema.pre<UserTypes.UserDocument>('save', function (next) {
-    if (!this.isModified('password') || this.isNew) return next();
+    if (!this.isModified('password') || this.isNew) return next(null);
 
     this.passwordChangedAt = new Date(Date.now() - 1000);
-    next();
+    next(null);
 });
 
 userSchema.pre<UserTypes.UserModel>(/^find/, function (next) {
     // this points to the current query
     this.find({ active: { $ne: false } });
-    next();
+    next(null);
 });
 
 userSchema.methods.correctPassword = async function (
-    candidatePassword,
-    userPassword
+    candidatePassword: string,
+    userPassword: string
 ) {
     return await bcrypt.compare(candidatePassword, userPassword);
 };
 
-userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
+userSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
     if (this.passwordChangedAt) {
         const changedTimestamp = parseInt(
             `${this.passwordChangedAt.getTime() / 1000}`,

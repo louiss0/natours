@@ -34,8 +34,7 @@ namespace UserTypes {
 
     export type UserModel = Model<UserDocument>
 
-    export type UserProfileInfo = Pick<UserTypes.UserDocument,
-        "id" | "email" | "name" | "password" | "passwordConfirm" | "photo">
+
 }
 
 export default UserTypes

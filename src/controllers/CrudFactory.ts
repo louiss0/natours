@@ -12,7 +12,7 @@ export type FilterRequest = Request & {
 
 export default abstract class CrudFactory {
 
-    protected static deleteOne = (Model: Model<Document>) =>
+    protected static deleteOne = <T extends Model<Document>>(Model: T) =>
         catchAsync(async (req, res, next) => {
             const doc = await Model.findByIdAndDelete(req.params.id);
 
@@ -22,15 +22,15 @@ export default abstract class CrudFactory {
 
 
 
-            sendJson(res, ({
+            sendJson(res, {
                 status: 'success',
                 data: null,
                 message: "Document Deleted"
-            })
-                , HTTPStatusCodes.NoContent);
+            },
+                HTTPStatusCodes.NoContent);
         });
 
-    protected static updateOne = (Model: Model<Document>) =>
+    protected static updateOne = <T extends Model<Document>>(Model: T) =>
         catchAsync(async (req, res, next) => {
             const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
                 new: true,
@@ -51,7 +51,7 @@ export default abstract class CrudFactory {
             })
         });
 
-    protected static createOne = (Model: Model<Document>) =>
+    protected static createOne = <T extends Model<Document>>(Model: T) =>
         catchAsync(async (req, res, next) => {
 
 
@@ -73,7 +73,7 @@ export default abstract class CrudFactory {
 
         });
 
-    protected static getOne = (Model: Model<Document>,
+    protected static getOne = <T extends Model<Document>>(Model: T,
         popOptions: QueryPopulateOptions | null = null) =>
         catchAsync(async (req, res, next) => {
             let query = Model.findById(req.params.id);
@@ -84,25 +84,23 @@ export default abstract class CrudFactory {
                 return next(new AppError('No document found with that ID', 404));
             }
 
-            res.status(200).json({
+            sendJson(res, {
                 status: 'success',
+                message: "Here is the document",
                 data: {
                     doc
                 }
             });
         });
 
-    protected static getAll = (Model: Model<Document>) =>
+    protected static getAll = <T extends Model<Document>>(Model: T) =>
         catchAsync(async (req, res, next) => {
 
 
             const filterRequest = { ...req } as FilterRequest
 
-            let filter = {}
+            const filter = filterRequest.filter ? filterRequest.filter : {}
 
-            if (filterRequest.filter) {
-                filter = filterRequest.filter
-            }
 
             const features = new APIFeatures(Model.find(filter), req.query as FilterFields)
                 .filter()

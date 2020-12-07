@@ -28,7 +28,7 @@ if (DATABASE && DATABASE_PASSWORD && DATABASE_NAME) {
         })
         .then(() => console.log('DB connection successful!'))
         .catch((reason) => {
-            console.log(reason)
+            console.error(reason)
         });
 
 } else {
