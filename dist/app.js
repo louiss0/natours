@@ -14,6 +14,7 @@ var hpp_1 = __importDefault(require("hpp"));
 var compression_1 = __importDefault(require("compression"));
 var cors_1 = __importDefault(require("cors"));
 var cookie_parser_1 = __importDefault(require("cookie-parser"));
+var express_csp_1 = __importDefault(require("express-csp"));
 var AppError_1 = __importDefault(require("./utils/AppError"));
 var globalErrorHandler_1 = __importDefault(require("./middlewares/globalErrorHandler"));
 var Paths_1 = __importDefault(require("./types/Paths"));
@@ -21,6 +22,7 @@ var UserRoutes_1 = __importDefault(require("./routes/UserRoutes"));
 var TourRoutes_1 = __importDefault(require("./routes/TourRoutes"));
 var reviewRoutes_1 = __importDefault(require("./routes/reviewRoutes"));
 var viewRoutes_1 = __importDefault(require("./routes/viewRoutes"));
+var bookingRoutes_1 = __importDefault(require("./routes/bookingRoutes"));
 // Start express app
 var app = express_1.default();
 app.set("view engine", "pug");
@@ -32,15 +34,7 @@ app.options('*', cors_1.default());
 // Serving static files
 app.use(express_1.default.static('public'));
 // Set security HTTP headers
-app.use(helmet_1.default.contentSecurityPolicy({
-    directives: {
-        defaultSrc: ["'self'", 'https:', 'http:', 'data:', 'ws:'],
-        baseUri: ["'self'"],
-        fontSrc: ["'self'", 'https:', 'http:', 'data:'],
-        scriptSrc: ["'self'", 'https:', 'http:', 'blob:'],
-        styleSrc: ["'self'", "'unsafe-inline'", 'https:', 'http:'],
-    },
-}));
+app.use(helmet_1.default());
 // Development logging
 if (process.env.NODE_ENV === 'development') {
     app.use(morgan_1.default('dev'));
@@ -52,6 +46,59 @@ var limiter = express_rate_limit_1.default({
     message: 'Too many requests from this IP, please try again in an hour!'
 });
 app.use('/api', limiter);
+express_csp_1.default.extend(app, {
+    policy: {
+        directives: {
+            // 'default-src': ['self'],
+            'style-src': ['self', 'unsafe-inline', 'https:'],
+            'font-src': ['self', 'https://fonts.gstatic.com'],
+            'script-src': [
+                'self',
+                'unsafe-inline',
+                'data',
+                'blob',
+                'https://js.stripe.com',
+                'https://*.mapbox.com',
+                'https://*.cloudflare.com/',
+                'https://bundle.js:8828',
+                'ws://localhost:56558/',
+            ],
+            'worker-src': [
+                'self',
+                'unsafe-inline',
+                'data:',
+                'blob:',
+                'https://*.stripe.com',
+                'https://*.mapbox.com',
+                'https://*.cloudflare.com/',
+                'https://bundle.js:*',
+                'ws://localhost:*/',
+            ],
+            'frame-src': [
+                'self',
+                'unsafe-inline',
+                'data:',
+                'blob:',
+                'https://*.stripe.com',
+                'https://*.mapbox.com',
+                'https://*.cloudflare.com/',
+                'https://bundle.js:*',
+                'ws://localhost:*/',
+            ],
+            'img-src': [
+                'self',
+                'unsafe-inline',
+                'data:',
+                'blob:',
+                'https://*.stripe.com',
+                'https://*.mapbox.com',
+                'https://*.cloudflare.com/',
+                'https://bundle.js:*',
+                'ws://localhost:*/',
+            ],
+        },
+    },
+});
 // Body parser, reading data from body into req.body
 app.use(express_1.default.json({ limit: '10kb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10kb' }));
@@ -84,6 +131,7 @@ app.use("/", viewRoutes_1.default);
 app.use("" + Paths_1.default.Version1 + Paths_1.default.Users, UserRoutes_1.default);
 app.use("" + Paths_1.default.Version1 + Paths_1.default.Tours, TourRoutes_1.default);
 app.use("" + Paths_1.default.Version1 + Paths_1.default.Reviews, reviewRoutes_1.default);
+app.use("" + Paths_1.default.Version1 + Paths_1.default.Bookings, bookingRoutes_1.default);
 app.all('*', function (req, res, next) {
     next(new AppError_1.default("Can't find " + req.originalUrl + " on this server!", 404));
 });

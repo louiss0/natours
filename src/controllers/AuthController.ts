@@ -69,8 +69,13 @@ export default class AuthController {
             passwordConfirm
         });
 
+        const url = `${req.protocol}://${req.get("host")}/me`
 
-        JWTTokenSenderAndManipulator.createSendToken(user, res, HTTPStatusCodes.Created);
+        await new Email(user, url).sendWelcome()
+
+        JWTTokenSenderAndManipulator.createSendToken(
+            user, res, HTTPStatusCodes.Created
+        );
 
     });
 
@@ -214,9 +219,8 @@ export default class AuthController {
 
         // 3) Send it to user's email
         try {
-            const resetURL = `${req.protocol}://${req.get(
-                'host'
-            )}/api/v1/user/reset-password/${resetToken}`;
+            const resetURL =
+                `${req.protocol}://${req.get('host')}/api/v1/user/reset-password/${resetToken}`;
 
             await new Email(user, resetURL).sendPasswordReset()
 
@@ -225,16 +229,26 @@ export default class AuthController {
                 status: 'success',
                 message: 'Token sent to email!'
             });
-        } catch (err) {
+
+        } catch (err: unknown) {
             user.passwordResetToken = null;
             user.passwordResetExpires = null;
             await user.save({ validateBeforeSave: false });
 
+
+
+            console.error(err)
             return next(
                 new AppError('There was an error sending the email. Try again later!', 500)
             );
         }
+
+
+
     });
+
+
+
 
     static resetPassword = catchAsync(async (req, res, next) => {
         // 1) Get user based on the token

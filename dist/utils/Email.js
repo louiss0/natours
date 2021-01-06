@@ -40,25 +40,44 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var nodemailer_1 = __importDefault(require("nodemailer"));
+var pug_1 = __importDefault(require("pug"));
+var html_to_text_1 = __importDefault(require("html-to-text"));
 var Email = /** @class */ (function () {
     function Email(user, url) {
         this.user = user;
         this.url = url;
-        this.to = user.email;
-        this.firstName = user.name.split(' ')[0];
-        this.from = "Shelton Louis < " + process.env.EMAIL_FROM + ">";
+        this.to = this.user.email;
+        this.firstName = this.user.name.split(' ')[0];
+        this.from = "" + process.env.EMAIL_FROM;
     }
     Email.prototype.newTransport = function () {
-        var _a = process.env, SENDGRID_USERNAME = _a.SENDGRID_USERNAME, SENDGRID_PASSWORD = _a.SENDGRID_PASSWORD, EMAIL_HOST = _a.EMAIL_HOST, EMAIL_PORT = _a.EMAIL_PORT, EMAIL_USERNAME = _a.EMAIL_USERNAME, EMAIL_PASSWORD = _a.EMAIL_PASSWORD;
-        if (process.env.NODE_ENV === 'production' &&
-            SENDGRID_USERNAME &&
-            SENDGRID_PASSWORD) {
-            // Sendgrid
+        var _a = process.env, SEND_GRID_USERNAME = _a.SEND_GRID_USERNAME, SEND_GRID_PASSWORD = _a.SEND_GRID_PASSWORD, EMAIL_HOST = _a.EMAIL_HOST, EMAIL_PORT = _a.EMAIL_PORT, EMAIL_USERNAME = _a.EMAIL_USERNAME, EMAIL_PASSWORD = _a.EMAIL_PASSWORD, SEND_GRID_EMAIL_FROM = _a.SEND_GRID_EMAIL_FROM;
+        var stringifiedCredentials = JSON.stringify({
+            SEND_GRID_USERNAME: SEND_GRID_USERNAME,
+            SEND_GRID_PASSWORD: SEND_GRID_PASSWORD,
+            EMAIL_HOST: EMAIL_HOST,
+            EMAIL_PORT: EMAIL_PORT,
+            EMAIL_USERNAME: EMAIL_USERNAME,
+            EMAIL_PASSWORD: EMAIL_PASSWORD,
+            SEND_GRID_EMAIL_FROM: SEND_GRID_EMAIL_FROM
+        }, null, 2);
+        if (!(SEND_GRID_USERNAME &&
+            SEND_GRID_EMAIL_FROM &&
+            SEND_GRID_PASSWORD &&
+            EMAIL_HOST &&
+            EMAIL_PORT &&
+            EMAIL_USERNAME &&
+            EMAIL_PASSWORD)) {
+            return console.error('You are missing the proper credentials', stringifiedCredentials);
+        }
+        if (process.env.NODE_ENV === 'production') {
+            // Send_grid
+            this.from = SEND_GRID_EMAIL_FROM;
             return nodemailer_1.default.createTransport({
-                service: 'SendGrid',
+                service: 'Send_Grid',
                 auth: {
-                    user: SENDGRID_USERNAME,
-                    pass: SENDGRID_PASSWORD
+                    user: SEND_GRID_USERNAME,
+                    pass: SEND_GRID_PASSWORD
                 }
             });
         }
@@ -73,22 +92,42 @@ var Email = /** @class */ (function () {
             });
         }
     };
-    // Send the actual email
-    Email.prototype.send = function (subject) {
+    /**  Send_ the actual email
+
+    @param template  template file that you are using
+    
+    @param subject  the topic of the email in a sentence
+
+    */
+    Email.prototype.send = function (template, subject) {
         return __awaiter(this, void 0, void 0, function () {
-            var mailOptions, transport;
-            return __generator(this, function (_a) {
-                mailOptions = {
-                    from: this.from,
-                    to: this.to,
-                    subject: subject,
-                    html: "\n\n                <h2> Hello " + this.firstName + " <h2>\n            <p>" + subject + "  " + this.url + " <p>\n            "
-                };
-                transport = this.newTransport();
-                if (transport) {
-                    transport.sendMail(mailOptions);
+            var _a, from, firstName, to, url, html, text, mailOptions, transport;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        _a = this, from = _a.from, firstName = _a.firstName, to = _a.to, url = _a.url;
+                        html = pug_1.default.renderFile(__dirname + "/../../views/emails/" + template + ".pug", { firstName: firstName, url: url, subject: subject });
+                        text = html_to_text_1.default.htmlToText(html, {
+                            preserveNewlines: true
+                        });
+                        mailOptions = {
+                            from: from,
+                            to: to,
+                            subject: subject,
+                            html: html,
+                            text: text
+                        };
+                        transport = this.newTransport();
+                        if (!transport) return [3 /*break*/, 2];
+                        return [4 /*yield*/, transport.sendMail(mailOptions)];
+                    case 1:
+                        _b.sent();
+                        return [3 /*break*/, 3];
+                    case 2:
+                        console.log(transport);
+                        _b.label = 3;
+                    case 3: return [2 /*return*/];
                 }
-                return [2 /*return*/];
             });
         });
     };
@@ -96,7 +135,7 @@ var Email = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.send('Welcome to the Natours Family!')];
+                    case 0: return [4 /*yield*/, this.send("welcome", 'Welcome to the Natours Family!')];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];
@@ -108,7 +147,7 @@ var Email = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             return __generator(this, function (_a) {
                 switch (_a.label) {
-                    case 0: return [4 /*yield*/, this.send('Use the link to reset your password Your password reset token (valid for only 10 minutes)')];
+                    case 0: return [4 /*yield*/, this.send("password", 'Use the link to reset your password Your password reset token (valid for only 10 minutes)')];
                     case 1:
                         _a.sent();
                         return [2 /*return*/];

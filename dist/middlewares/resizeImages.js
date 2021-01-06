@@ -40,7 +40,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 var sharp_1 = __importDefault(require("sharp"));
-var crypto_1 = __importDefault(require("crypto"));
 var catchAsync_1 = __importDefault(require("../utils/catchAsync"));
 /**
 
@@ -48,31 +47,53 @@ var catchAsync_1 = __importDefault(require("../utils/catchAsync"));
 
     *  @param folderPath :string  this is the path to the folder you want to use
 
-    *  ! Don't  start with / with folder path
+    *  ! Don't  start with / with folder path or end with /
 
 */
-var resizeImage = function (startName, folderPath) {
+var resizeImages = function (startName, folderPath) {
+    if (folderPath === void 0) { folderPath = "public/img"; }
     return catchAsync_1.default(function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
-        var width, height, quality, id;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
+        function returnSharp(buffer, fileName) {
+            return sharp_1.default(buffer)
+                .resize(width, height)
+                .toFormat("jpeg")
+                .jpeg({ quality: quality })
+                .toFile(fileName);
+        }
+        var _a, width, height, quality, fileName, _b;
+        return __generator(this, function (_c) {
+            switch (_c.label) {
                 case 0:
-                    width = 500, height = 500, quality = 90;
-                    id = crypto_1.default.randomBytes(16).toString();
-                    req.file.filename = startName + "-" + id + "-" + Date.now() + ".jpeg";
-                    if (!req.file)
+                    _a = [2000, 1333, 90], width = _a[0], height = _a[1], quality = _a[2];
+                    if (Array.isArray(req.files)) {
                         return [2 /*return*/, next()];
-                    return [4 /*yield*/, sharp_1.default(req.file.buffer)
-                            .resize(width, height)
-                            .toFormat("jpeg")
-                            .jpeg({ quality: quality, })
-                            .toFile(folderPath + "/" + req.file.filename)];
+                    }
+                    req.body.imageCover = startName + "-" + req.params.id + "-" + Date.now() + ".jpeg";
+                    fileName = folderPath + "/" + req.body.imageCover;
+                    return [4 /*yield*/, returnSharp(req.files.imageCover[0].buffer, fileName)];
                 case 1:
-                    _a.sent();
+                    _c.sent();
+                    _b = req.body;
+                    return [4 /*yield*/, Promise.all(req.files.images.map(function (file, i) { return __awaiter(void 0, void 0, void 0, function () {
+                            var fileFormat, fileName;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        fileFormat = startName + "-" + req.params.id + "-" + Date.now() + "-" + (i + 1) + ".jpeg";
+                                        fileName = folderPath + "/" + fileFormat;
+                                        return [4 /*yield*/, returnSharp(file.buffer, fileName)];
+                                    case 1:
+                                        _a.sent();
+                                        return [2 /*return*/, fileFormat];
+                                }
+                            });
+                        }); }))];
+                case 2:
+                    _b.images = _c.sent();
                     next();
                     return [2 /*return*/];
             }
         });
     }); });
 };
-exports.default = resizeImage;
+exports.default = resizeImages;

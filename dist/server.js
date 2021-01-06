@@ -35,7 +35,9 @@ if (DATABASE && DATABASE_PASSWORD && DATABASE_NAME) {
         useFindAndModify: true,
         useUnifiedTopology: true
     })
-        .then(function () { return console.log('DB connection successful!'); })
+        .then(function () {
+        console.log("DB connection successful!");
+    })
         .catch(function (reason) {
         console.error(reason);
     });
@@ -54,7 +56,7 @@ var server = app_1.default.listen(port, function () {
 process.on('unhandledRejection', function (err) {
     console.log('UNHANDLED REJECTION! 💥 Shutting down...');
     var _a = __assign({}, err), name = _a.name, message = _a.message;
-    console.error(name, message);
+    console.error(message, name);
     server.close(function () {
         process.exit(1);
     });

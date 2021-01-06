@@ -1,7 +1,8 @@
 import nodemailer from "nodemailer"
 import Mail from "nodemailer/lib/mailer";
 import UserTypes from "../types/UserTypes";
-
+import pug from "pug"
+import htmlToText from "html-to-text"
 export default class Email {
 
     private to
@@ -10,31 +11,60 @@ export default class Email {
     constructor(
         private user: UserTypes.UserDocument,
         private url: string) {
-        this.to = user.email;
-        this.firstName = user.name.split(' ')[0];
-        this.from = `Shelton Louis < ${process.env.EMAIL_FROM}>`;
+        this.to = this.user.email;
+        this.firstName = this.user.name.split(' ')[0];
+        this.from = `${process.env.EMAIL_FROM}`;
     }
 
     newTransport() {
         const {
-            SENDGRID_USERNAME,
-            SENDGRID_PASSWORD,
+            SEND_GRID_USERNAME,
+            SEND_GRID_PASSWORD,
             EMAIL_HOST,
             EMAIL_PORT,
             EMAIL_USERNAME,
-            EMAIL_PASSWORD
+            EMAIL_PASSWORD,
+            SEND_GRID_EMAIL_FROM
         } = process.env
 
-        if (process.env.NODE_ENV === 'production' &&
-            SENDGRID_USERNAME &&
-            SENDGRID_PASSWORD) {
+        const stringifiedCredentials = JSON.stringify({
+            SEND_GRID_USERNAME,
+            SEND_GRID_PASSWORD,
+            EMAIL_HOST,
+            EMAIL_PORT,
+            EMAIL_USERNAME,
+            EMAIL_PASSWORD,
+            SEND_GRID_EMAIL_FROM
 
-            // Sendgrid
+        }, null, 2)
+
+        if (
+            !(
+                SEND_GRID_USERNAME &&
+                SEND_GRID_EMAIL_FROM &&
+                SEND_GRID_PASSWORD &&
+                EMAIL_HOST &&
+                EMAIL_PORT &&
+                EMAIL_USERNAME &&
+                EMAIL_PASSWORD
+            )) {
+            return console.error(
+                'You are missing the proper credentials',
+                stringifiedCredentials)
+        }
+
+
+
+        if (process.env.NODE_ENV === 'production') {
+
+            // Send_grid
+            this.from = SEND_GRID_EMAIL_FROM
             return nodemailer.createTransport({
-                service: 'SendGrid',
+                service: 'Send_Grid',
                 auth: {
-                    user: SENDGRID_USERNAME,
-                    pass: SENDGRID_PASSWORD
+                    user: SEND_GRID_USERNAME,
+                    pass: SEND_GRID_PASSWORD
+
                 }
             });
         }
@@ -52,39 +82,56 @@ export default class Email {
         }
     }
 
-    // Send the actual email
-    async send(subject: string): Promise<void> {
+    /**  Send_ the actual email
+
+    @param template  template file that you are using
+    
+    @param subject  the topic of the email in a sentence
+
+    */
+    async send(template: string, subject: string): Promise<void> {
         // 1) Render HTML based on a pug template
 
+        const { from, firstName, to, url } = this
+
+        const html = pug.renderFile(
+            `${__dirname}/../../views/emails/${template}.pug`,
+            { firstName, url, subject }
+        )
+
+        const text = htmlToText.htmlToText(html, {
+            preserveNewlines: true
+        })
 
         // 2) Define email options
-        const mailOptions: Mail.Options = {
-            from: this.from,
-            to: this.to,
-            subject,
-            html: `
 
-                <h2> Hello ${this.firstName} <h2>
-            <p>${subject}  ${this.url} <p>
-            `
+        const mailOptions: Mail.Options = {
+            from,
+            to,
+            subject,
+            html,
+            text
         };
 
-        // 3) Create a transport and send email
+        // 3) Create a transport and send_ email
         const transport = this.newTransport()
 
         if (transport) {
-            transport.sendMail(mailOptions);
+            await transport.sendMail(mailOptions);
 
+        } else {
+
+            console.log(transport)
         }
 
     }
 
     async sendWelcome(): Promise<void> {
-        await this.send('Welcome to the Natours Family!');
+        await this.send("welcome", 'Welcome to the Natours Family!');
     }
 
     async sendPasswordReset(): Promise<void> {
-        await this.send(
+        await this.send("password",
             'Use the link to reset your password Your password reset token (valid for only 10 minutes)'
         );
     }

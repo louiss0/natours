@@ -6,5 +6,6 @@ var Paths;
     Paths["Users"] = "/users";
     Paths["Tours"] = "/tours";
     Paths["Reviews"] = "/reviews";
+    Paths["Bookings"] = "/bookings";
 })(Paths || (Paths = {}));
 exports.default = Paths;

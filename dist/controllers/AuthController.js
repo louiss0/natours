@@ -87,7 +87,7 @@ var AuthController = /** @class */ (function () {
         next();
     };
     AuthController.signUp = catchAsync_1.default(function (req, res, next) { return __awaiter(void 0, void 0, void 0, function () {
-        var _a, name, email, password, passwordConfirm, userInDatabase, user;
+        var _a, name, email, password, passwordConfirm, userInDatabase, user, url;
         return __generator(this, function (_b) {
             switch (_b.label) {
                 case 0:
@@ -108,6 +108,10 @@ var AuthController = /** @class */ (function () {
                         })];
                 case 2:
                     user = _b.sent();
+                    url = req.protocol + "://" + req.get("host") + "/me";
+                    return [4 /*yield*/, new Email_1.default(user, url).sendWelcome()];
+                case 3:
+                    _b.sent();
                     JWTTokenSenderAndManipulator_1.default.createSendToken(user, res, HTTPStatusCodes_1.default.Created);
                     return [2 /*return*/];
             }
@@ -247,6 +251,7 @@ var AuthController = /** @class */ (function () {
                     return [4 /*yield*/, user.save({ validateBeforeSave: false })];
                 case 6:
                     _a.sent();
+                    console.error(err_1);
                     return [2 /*return*/, next(new AppError_1.default('There was an error sending the email. Try again later!', 500))];
                 case 7: return [2 /*return*/];
             }

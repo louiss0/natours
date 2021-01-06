@@ -5,9 +5,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var AuthController_1 = __importDefault(require("../controllers/AuthController"));
+var BookingController_1 = __importDefault(require("../controllers/BookingController"));
 var viewController_1 = __importDefault(require("../controllers/viewController"));
 var viewRouter = express_1.Router();
-viewRouter.get('/', AuthController_1.default.isLoggedIn, viewController_1.default.overview);
+viewRouter.get('/', BookingController_1.default.createBookingCheckout, AuthController_1.default.isLoggedIn, viewController_1.default.overview);
 viewRouter.get('/tour/:slug', AuthController_1.default.isLoggedIn, viewController_1.default.renderTourPage);
 viewRouter.get('/login', AuthController_1.default.isLoggedIn, viewController_1.default.renderLoginPage);
 viewRouter.get('/me', AuthController_1.default.protect, viewController_1.default.renderAccountPage);

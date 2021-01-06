@@ -26,7 +26,10 @@ if (DATABASE && DATABASE_PASSWORD && DATABASE_NAME) {
             useFindAndModify: true,
             useUnifiedTopology: true
         })
-        .then(() => console.log('DB connection successful!'))
+        .then(() => {
+            console.log(`DB connection successful!`)
+        }
+        )
         .catch((reason) => {
             console.error(reason)
         });
@@ -49,7 +52,7 @@ process.on('unhandledRejection', err => {
     console.log('UNHANDLED REJECTION! 💥 Shutting down...');
     const { name, message } = { ...err } as Error
 
-    console.error(name, message)
+    console.error(message, name)
     server.close(() => {
         process.exit(1);
     });

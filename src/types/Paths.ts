@@ -3,6 +3,7 @@ enum Paths {
     Users = "/users",
     Tours = "/tours",
     Reviews = "/reviews",
+    Bookings = "/bookings",
 }
 
 

@@ -3,7 +3,7 @@ import AuthController from "../controllers/AuthController";
 import UserController from "../controllers/UserController";
 import UserTypes from "../types/UserTypes";
 const userRouter = Router()
-import imageUploader from "../middlewares/imageUploader";
+import ImageUploader from "../utils/ImageUploader";
 import resizeImage from "../middlewares/resizeImage";
 
 userRouter.get("/me", AuthController.protect, UserController.me)
@@ -12,8 +12,8 @@ userRouter.delete("/delete-me", AuthController.protect, UserController.deleteMe)
 
 userRouter.patch("/update-me",
     AuthController.protect,
-    imageUploader().single("photo"),
-    resizeImage,
+    ImageUploader.uploadUserPhoto,
+    resizeImage("users", "public/img/users"),
     UserController.updateMe
 )
 

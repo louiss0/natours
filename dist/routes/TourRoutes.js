@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var express_1 = require("express");
 var AuthController_1 = __importDefault(require("../controllers/AuthController"));
 var TourController_1 = __importDefault(require("../controllers/TourController"));
+var ImageUploader_1 = __importDefault(require("../utils/ImageUploader"));
+var resizeImages_1 = __importDefault(require("../middlewares/resizeImages"));
 var UserTypes_1 = __importDefault(require("../types/UserTypes"));
 var reviewRoutes_1 = __importDefault(require("./reviewRoutes"));
 var tourRouter = express_1.Router();
@@ -26,6 +28,6 @@ tourRouter.route("/")
     .post(TourController_1.default.createTour);
 tourRouter.route("/:id")
     .get(TourController_1.default.getTour)
-    .patch(TourController_1.default.updateTour)
+    .patch(AuthController_1.default.protect, ImageUploader_1.default.uploadTourImages, resizeImages_1.default("tour", "public/img/tours"), AuthController_1.default.restrictTo(UserTypes_1.default.UserRoles.Admin, UserTypes_1.default.UserRoles.LeadGuide), TourController_1.default.updateTour)
     .delete(TourController_1.default.deleteTour);
 exports.default = tourRouter;

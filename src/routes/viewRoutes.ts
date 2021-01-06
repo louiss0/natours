@@ -1,5 +1,6 @@
 import { Router } from "express";
 import AuthController from "../controllers/AuthController";
+import BookingController from "../controllers/BookingController";
 import ViewController from "../controllers/viewController";
 
 
@@ -7,10 +8,10 @@ import ViewController from "../controllers/viewController";
 const viewRouter = Router()
 
 
-
 viewRouter.get('/',
+    BookingController.createBookingCheckout,
     AuthController.isLoggedIn,
-    ViewController.overview)
+    ViewController.overview) 
 
 viewRouter.get('/tour/:slug',
     AuthController.isLoggedIn,

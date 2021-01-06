@@ -1,18 +1,18 @@
 import catchAsync from '../utils/catchAsync';
 import AppError from '../utils/AppError';
 import APIFeatures, { FilterFields } from '../utils/ApiFeatures';
-import { Document, Model, QueryPopulateOptions } from 'mongoose';
+import { Document, FilterQuery, Model, QueryPopulateOptions } from 'mongoose';
 import sendJson from '../utils/sendJson';
 import HTTPStatusCodes from '../types/HTTPStatusCodes';
 import { Request } from 'express';
 
-export type FilterRequest = Request & {
-    filter?: Record<string, string>
+export type FilterRequest<T> = Request & {
+    filter?: FilterQuery<T>
 }
 
 export default abstract class CrudFactory {
 
-    protected static deleteOne = <T extends Model<Document>>(Model: T) =>
+    protected static deleteOne = <T extends Document, U extends {}>(Model: Model<T, U>) =>
         catchAsync(async (req, res, next) => {
             const doc = await Model.findByIdAndDelete(req.params.id);
 
@@ -30,7 +30,7 @@ export default abstract class CrudFactory {
                 HTTPStatusCodes.NoContent);
         });
 
-    protected static updateOne = <T extends Model<Document>>(Model: T) =>
+    protected static updateOne = <T extends Document, U extends {}>(Model: Model<T, U>) =>
         catchAsync(async (req, res, next) => {
             const doc = await Model.findByIdAndUpdate(req.params.id, req.body, {
                 new: true,
@@ -51,7 +51,7 @@ export default abstract class CrudFactory {
             })
         });
 
-    protected static createOne = <T extends Model<Document>>(Model: T) =>
+    protected static createOne = <T extends Document, U extends {}>(Model: Model<T, U>) =>
         catchAsync(async (req, res, next) => {
 
 
@@ -73,8 +73,8 @@ export default abstract class CrudFactory {
 
         });
 
-    protected static getOne = <T extends Model<Document>>(Model: T,
-        popOptions: QueryPopulateOptions | null = null) =>
+    protected static getOne = <T extends Document, U extends {}>
+        (Model: Model<T, U>, popOptions: QueryPopulateOptions | null = null) =>
         catchAsync(async (req, res, next) => {
             let query = Model.findById(req.params.id);
             if (popOptions) query = query.populate(popOptions);
@@ -93,33 +93,34 @@ export default abstract class CrudFactory {
             });
         });
 
-    protected static getAll = <T extends Model<Document>>(Model: T) =>
-        catchAsync(async (req, res, next) => {
+    protected static getAll =
+        <T extends Document, U extends {}, FilterKeys>(Model: Model<T, U>) =>
+            catchAsync(async (req, res, next) => {
 
 
-            const filterRequest = { ...req } as FilterRequest
+                const filterRequest = { ...req } as FilterRequest<FilterKeys>
 
-            const filter = filterRequest.filter ? filterRequest.filter : {}
-
-
-            const features = new APIFeatures(Model.find(filter), req.query as FilterFields)
-                .filter()
-                .sort()
-                .limitFields()
-                .paginate();
-
-            const docs = await features.$query;
-
-            // SEND RESPONSE
+                const filter = filterRequest.filter ? filterRequest.filter : {}
 
 
-            sendJson(res, {
-                status: 'success',
-                message: "Here are all the documents",
-                results: docs.length,
-                data: {
-                    docs
-                }
-            })
-        });
+                const features = new APIFeatures(Model.find(filter), req.query as FilterFields)
+                    .filter()
+                    .sort()
+                    .limitFields()
+                    .paginate();
+
+                const docs = await features.$query;
+
+                // SEND RESPONSE
+
+
+                sendJson(res, {
+                    status: 'success',
+                    message: "Here are all the documents",
+                    results: docs.length,
+                    data: {
+                        docs
+                    }
+                })
+            });
 } 

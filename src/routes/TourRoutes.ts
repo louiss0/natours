@@ -1,7 +1,8 @@
 import { Router } from "express";
 import AuthController from "../controllers/AuthController";
 import TourController from "../controllers/TourController";
-import imageUploader from "../middlewares/imageUploader";
+import ImageUploader from "../utils/ImageUploader";
+import resizeImages from "../middlewares/resizeImages";
 import UserTypes from "../types/UserTypes";
 import reviewRouter from "./reviewRoutes";
 
@@ -38,7 +39,13 @@ tourRouter.route("/")
 
 tourRouter.route("/:id")
     .get(TourController.getTour)
-    .patch(TourController.updateTour)
+    .patch(
+        AuthController.protect,
+        ImageUploader.uploadTourImages,
+        resizeImages("tour", "public/img/tours"),
+        AuthController.restrictTo(UserTypes.UserRoles.Admin, UserTypes.UserRoles.LeadGuide),
+        TourController.updateTour
+    )
     .delete(TourController.deleteTour)
 
 
